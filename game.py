@@ -41,6 +41,16 @@ while running:
     if keys[pygame.K_d]:
         character_rect.x += speed  # Move right
 
+    # Prevent the character from moving off the screen
+    if character_rect.top <= 0:
+        character_rect.top = 0
+    if character_rect.bottom >= height:
+        character_rect.bottom = height
+    if character_rect.left <= 0:
+        character_rect.left = 0
+    if character_rect.right >= width:
+        character_rect.right = width
+
     # Draw the background and the character on the screen
     screen.blit(background, (0, 0))
     screen.blit(character, character_rect)
