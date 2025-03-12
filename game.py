@@ -9,12 +9,14 @@ width, height = 960, 640
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Basic Character Movement")
 
-# Load and scale the background image
-background = pygame.image.load("assets\images\Main-Background.png")
-background = pygame.transform.scale(background, (width, height))
+# Load and scale the background images
+background1 = pygame.image.load("assets/images/Main-Background.png")
+background1 = pygame.transform.scale(background1, (width, height))
+background2 = pygame.image.load("assets/images/saloon-background.png")
+background2 = pygame.transform.scale(background2, (width, height))
 
 # Load the character image and set its starting position
-character = pygame.image.load("assets\images\main-character.png")
+character = pygame.image.load("assets/images/main-character.png")
 character_rect = character.get_rect()
 character_rect.center = (width // 2, height // 2)
 
@@ -22,6 +24,9 @@ character_rect.center = (width // 2, height // 2)
 speed = 2
 
 clock = pygame.time.Clock()
+
+# Variable to track the current scene
+current_scene = 1
 
 running = True
 while running:
@@ -51,8 +56,17 @@ while running:
     if character_rect.right >= width:
         character_rect.right = width
 
-    # Draw the background and the character on the screen
-    screen.blit(background, (0, 0))
+    # Check if the character reaches a specific point to switch scenes
+    if current_scene == 1 and character_rect.colliderect(pygame.Rect(800, 0, 160, 640)):
+        current_scene = 2
+        character_rect.center = (width // 2, height // 2)  # Reset character position
+
+    # Draw the appropriate background and the character on the screen
+    if current_scene == 1:
+        screen.blit(background1, (0, 0))
+    elif current_scene == 2:
+        screen.blit(background2, (0, 0))
+
     screen.blit(character, character_rect)
 
     pygame.display.flip()  # Update the display
