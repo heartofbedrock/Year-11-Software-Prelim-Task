@@ -135,14 +135,7 @@ while running:
     
     # Draw the world (background) on the camera surface, offset by the camera position
     camera_surface.blit(world, (-camera_x, -camera_y))
-    
-    # Optionally draw collision boundaries for debugging (drawn in red)
-    if DEBUG:
-        for rect in collision_rects:
-            # Adjust rect position to camera view coordinates
-            debug_rect = pygame.Rect(rect.x - camera_x, rect.y - camera_y, rect.width, rect.height)
-            pygame.draw.rect(camera_surface, (255, 0, 0), debug_rect, 2)
-    
+
     # Draw the character on the camera surface (using its world coordinates)
     char_draw_x = character_rect.x - camera_x
     char_draw_y = character_rect.y - camera_y
