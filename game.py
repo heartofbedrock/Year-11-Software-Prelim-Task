@@ -8,7 +8,7 @@ pygame.init()
 # Set up the display (screen resolution)
 width, height = 960, 640
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Character Movement with Boundaries and Camera")
+pygame.display.set_caption("Defenitly not Stardew Valley")
 
 # Zoom factor and camera view dimensions (world view size)
 zoom = 2.0
@@ -19,29 +19,39 @@ def load_collision_rects(tmx_file):
     tmx_data = pytmx.TiledMap(tmx_file)
     collision_rects = []
     for obj in tmx_data.objects:
-        # Check if the object is marked as a collision area (by name or property)
         if obj.name == "Collision":
             rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
             collision_rects.append(rect)
     return collision_rects
 
+# Function to get an object's rectangle by its name from a Tiled map file
+def get_object_rect(tmx_file, object_name):
+    tmx_data = pytmx.TiledMap(tmx_file)
+    for obj in tmx_data.objects:
+        if obj.name == object_name:
+            return pygame.Rect(obj.x, obj.y, obj.width, obj.height)
+    return None
+
 # Load collision data from Tiled maps for each scene
 collision_rects_scene1 = load_collision_rects("assets/maps/Main.tmx")
 collision_rects_scene2 = load_collision_rects("assets/maps/Saloon.tmx")
 
+# Load the transition zone (entrance_saloon) from the Main map
+entrance_saloon_rect = get_object_rect("assets/maps/Main.tmx", "entrance_saloon")
+
 # Load the background images for each scene.
-# These images represent the full world.
 background1 = pygame.image.load("assets/images/Main-Background.png")
 background2 = pygame.image.load("assets/images/saloon-background.png")
 
-# For initial world dimensions, assume scene 1's background defines the world size.
+# Use scene 1's background to determine the world dimensions initially.
 world_width, world_height = background1.get_width(), background1.get_height()
 
-# Load the character image and scale it down (50% of original size)
+# Load the character image and scale it down.
 character_original = pygame.image.load("assets/images/main-character.png")
-character = pygame.transform.scale(character_original, (character_original.get_width() // 2, character_original.get_height() // 2))
+character = pygame.transform.scale(
+    character_original, (character_original.get_width() // 2, character_original.get_height() // 2)
+)
 character_rect = character.get_rect()
-# Place the character initially at the center of the scene 1 world
 character_rect.center = (world_width // 2, world_height // 2)
 
 # Movement speed in world coordinates
@@ -51,6 +61,36 @@ clock = pygame.time.Clock()
 
 # Track the current scene (1 or 2)
 current_scene = 1
+
+def fade(screen, fade_in=True, duration=500):
+    """
+    Fades the screen in or out over the specified duration.
+    
+    Args:
+        screen (pygame.Surface): The display surface.
+        fade_in (bool): True to fade out (to black), False to fade in.
+        duration (int): Duration of the fade effect in milliseconds.
+    """
+    fade_surface = pygame.Surface(screen.get_size())
+    fade_surface.fill((0, 0, 0))
+    fade_clock = pygame.time.Clock()
+    start_time = pygame.time.get_ticks()
+    
+    while True:
+        elapsed = pygame.time.get_ticks() - start_time
+        if elapsed >= duration:
+            break
+        # Calculate alpha: rising for fade-out, falling for fade-in.
+        if fade_in:
+            alpha = int(255 * (elapsed / duration))
+        else:
+            alpha = 255 - int(255 * (elapsed / duration))
+        fade_surface.set_alpha(alpha)
+        
+        # Draw the current screen (assumes the scene is already drawn) and apply the fade overlay
+        screen.blit(fade_surface, (0, 0))
+        pygame.display.flip()
+        fade_clock.tick(60)
 
 running = True
 while running:
@@ -100,24 +140,20 @@ while running:
     # Check for collisions with boundaries from Tiled
     for rect in collision_rects:
         if character_rect.colliderect(rect):
-            # On collision, revert to the previous position
             character_rect.x, character_rect.y = old_x, old_y
             break
 
-    # Scene transition example:
-    # In scene 1, if the character enters a specific zone, switch to scene 2.
-    transition_zone = pygame.Rect(846, 0, 160, 624)  # Adjust these coordinates as needed
-    if current_scene == 1 and character_rect.colliderect(transition_zone):
+    # Scene transition: if in scene 1 and colliding with the 'entrance_saloon' zone, trigger transition
+    if current_scene == 1 and entrance_saloon_rect is not None and character_rect.colliderect(entrance_saloon_rect):
+        fade(screen, fade_in=True, duration=500)  # Fade out
         current_scene = 2
-        # Set the character's starting position in scene 2 (adjust as desired)
-        character_rect.center = (100, 200)
+        character_rect.center = (100, 200)  # Set the new starting position for scene 2
+        fade(screen, fade_in=False, duration=500)  # Fade in
 
     # --- Camera Implementation ---
-    # Compute the camera's top-left so that the view is centered on the character.
     camera_x = character_rect.centerx - view_width // 2
     camera_y = character_rect.centery - view_height // 2
 
-    # Clamp the camera to the world boundaries
     if camera_x < 0:
         camera_x = 0
     if camera_y < 0:
@@ -127,18 +163,13 @@ while running:
     if camera_y + view_height > world_height:
         camera_y = world_height - view_height
 
-    # Create a temporary camera surface (the "view" of the world)
     camera_surface = pygame.Surface((view_width, view_height))
-    
-    # Draw the world (background) on the camera surface, offset by the camera position
     camera_surface.blit(world, (-camera_x, -camera_y))
 
-    # Draw the character on the camera surface (using its world coordinates)
     char_draw_x = character_rect.x - camera_x
     char_draw_y = character_rect.y - camera_y
     camera_surface.blit(character, (char_draw_x, char_draw_y))
     
-    # Scale the camera surface up to the screen size (this creates the zoom effect)
     final_surface = pygame.transform.scale(camera_surface, (width, height))
     screen.blit(final_surface, (0, 0))
     
