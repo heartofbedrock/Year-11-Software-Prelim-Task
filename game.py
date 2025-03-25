@@ -14,9 +14,6 @@ pygame.display.set_caption("Character Movement with Boundaries and Camera")
 zoom = 2.0
 view_width, view_height = int(width / zoom), int(height / zoom)
 
-# Toggle debug mode to draw collision rectangles
-DEBUG = True
-
 # Function to load collision rectangles from a Tiled map file
 def load_collision_rects(tmx_file):
     tmx_data = pytmx.TiledMap(tmx_file)
