@@ -147,7 +147,7 @@ while running:
     if current_scene == 1 and entrance_saloon_rect is not None and character_rect.colliderect(entrance_saloon_rect):
         fade(screen, fade_in=True, duration=500)  # Fade out
         current_scene = 2
-        character_rect.center = (100, 200)  # Set the new starting position for scene 2
+        character_rect.center = (700, 1145)  # Set the new starting position for scene 2
         fade(screen, fade_in=False, duration=500)  # Fade in
 
     # --- Camera Implementation ---
@@ -172,6 +172,15 @@ while running:
     
     final_surface = pygame.transform.scale(camera_surface, (width, height))
     screen.blit(final_surface, (0, 0))
+
+    # Minimap implementation
+    minimap_surface = pygame.Surface((width // 4, height // 4))
+    minimap_surface.blit(world, (0, 0))
+    minimap_surface = pygame.transform.scale(minimap_surface, (width // 4, height // 4))
+    minimap_rect = minimap_surface.get_rect()
+    minimap_rect.topleft = (10, 10)
+    pygame.draw.rect(minimap_surface, (255, 0, 0), (char_draw_x // 4, char_draw_y // 4, 5, 5))
+    screen.blit(minimap_surface, minimap_rect)
     
     pygame.display.flip()
 
