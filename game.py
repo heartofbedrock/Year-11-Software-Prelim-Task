@@ -63,14 +63,6 @@ clock = pygame.time.Clock()
 current_scene = 1
 
 def fade(screen, fade_in=True, duration=500):
-    """
-    Fades the screen in or out over the specified duration.
-    
-    Args:
-        screen (pygame.Surface): The display surface.
-        fade_in (bool): True to fade out (to black), False to fade in.
-        duration (int): Duration of the fade effect in milliseconds.
-    """
     fade_surface = pygame.Surface(screen.get_size())
     fade_surface.fill((0, 0, 0))
     fade_clock = pygame.time.Clock()
@@ -147,7 +139,8 @@ while running:
     if current_scene == 1 and entrance_saloon_rect is not None and character_rect.colliderect(entrance_saloon_rect):
         fade(screen, fade_in=True, duration=500)  # Fade out
         current_scene = 2
-        character_rect.center = (700, 1145)  # Set the new starting position for scene 2
+        Spawnpoint_saloon_rect = get_object_rect("assets/maps/Saloon.tmx", "Spawnpoint")
+        character_rect.center = Spawnpoint_saloon_rect.center
         fade(screen, fade_in=False, duration=500)  # Fade in
 
     # --- Camera Implementation ---
@@ -173,15 +166,26 @@ while running:
     final_surface = pygame.transform.scale(camera_surface, (width, height))
     screen.blit(final_surface, (0, 0))
 
-    # Minimap implementation
-    minimap_surface = pygame.Surface((width // 4, height // 4))
-    minimap_surface.blit(world, (0, 0))
-    minimap_surface = pygame.transform.scale(minimap_surface, (width // 4, height // 4))
-    minimap_rect = minimap_surface.get_rect()
-    minimap_rect.topleft = (10, 10)
-    pygame.draw.rect(minimap_surface, (255, 0, 0), (char_draw_x // 4, char_draw_y // 4, 5, 5))
-    screen.blit(minimap_surface, minimap_rect)
-    
+  # --- Minimap implementation ---
+    minimap_width, minimap_height = width // 4.5, height // 4.5
+
+    # 1. Shrink the full world to minimap dimensions:
+    minimap_surface = pygame.transform.scale(world, (minimap_width, minimap_height))
+
+    # 2. Compute the player's dot position on the minimap:
+    #    (character_rect.x is world‐space; world_width/world_height from the current scene)
+    dot_x = int(character_rect.x / world_width * minimap_width)
+    dot_y = int(character_rect.y / world_height * minimap_height)
+
+    # 3. Draw a small red square (5×5 pixels) at that position:
+    pygame.draw.rect(minimap_surface, (255, 0, 0), (dot_x, dot_y, 5, 5))
+
+    # 4. Optional: draw a border around the minimap
+    border_rect = pygame.Rect(10, 10, minimap_width, minimap_height)
+    pygame.draw.rect(screen, (255, 255, 255), border_rect, 2)
+
+    # 5. Blit to the top‐left of the screen
+    screen.blit(minimap_surface, (10, 10))
     pygame.display.flip()
 
 pygame.quit()
