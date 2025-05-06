@@ -8,4 +8,4 @@ python /.game.py
 ```
 
 ## Ethical and Legal implications
-Ethical and legal implications need to be respected when creating a program or a game. For example, the tileset used in my game was taken directly from the original game "Stardew Valley". This would be a major copyright issue if I were to make it public. I however contacted the developer/ of the game and as
+Ethical and legal implications need to be respected when creating a program or a game. For example, the tileset used in my game was taken directly from the original game "Stardew Valley". This would be a major copyright issue if I were to make it public. I however contacted the developer/owner of the game and asked for permission to use the game assets for this specific project. He responded and confirmed my request.
