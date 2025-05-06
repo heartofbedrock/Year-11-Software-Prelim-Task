@@ -1,3 +1,9 @@
+# This is a simple 2D game using Pygame and Tiled maps.
+# The game features a character that can move around a world, with collision detection and scene transitions.
+# The game also includes a minimap that shows the player's position in the world.   
+# The game uses Tiled maps to define the world and collision areas, and Pygame to handle graphics and input.
+
+# Import necessary libraries
 import pygame
 import sys
 import pytmx
