@@ -40,14 +40,16 @@ def get_object_rect(tmx_file, object_name):
 
 # Load collision data from Tiled maps for each scene
 collision_rects_scene1 = load_collision_rects("assets/maps/Main.tmx")
-collision_rects_scene2 = load_collision_rects("assets/maps/Saloon.tmx")
+collision_rects_scene2 = load_collision_rects("assets/maps/Salon.tmx")
 
-# Load the transition zone (entrance_saloon) from the Main map
-entrance_saloon_rect = get_object_rect("assets/maps/Main.tmx", "entrance_saloon")
+# Load the transition zone (entrance_Salon) from the Main map
+entrance_Salon_rect = get_object_rect("assets/maps/Main.tmx", "entrance_saloon")
+# Load the exit zone (Exit) from the Salon map
+Exit = get_object_rect("assets/maps/Salon.tmx", "Exit")
 
 # Load the background images for each scene.
 background1 = pygame.image.load("assets/images/Main-Background.png")
-background2 = pygame.image.load("assets/images/saloon-background.png")
+background2 = pygame.image.load("assets/images/Saloon.png")
 
 # Use scene 1's background to determine the world dimensions initially.
 world_width, world_height = background1.get_width(), background1.get_height()
@@ -55,10 +57,18 @@ world_width, world_height = background1.get_width(), background1.get_height()
 # Load the character image and scale it down.
 character_original = pygame.image.load("assets/images/main-character.png")
 character = pygame.transform.scale(
-    character_original, (character_original.get_width() // 2, character_original.get_height() // 2)
+    character_original, (character_original.get_width() // 1.5, character_original.get_height() // 1.5)
 )
 character_rect = character.get_rect()
 character_rect.center = (world_width // 2, world_height // 2)
+
+# --- QUEST STATE ---
+quest_started = False
+has_carrot   = False
+
+# Grab the NPC in the saloon (scene 2) and the carrot on the farm (scene 1)
+npc_rect       = get_object_rect("assets/maps/salon.tmx", "NPC")
+carrot_rect    = get_object_rect("assets/maps/Main.tmx",  "carrot")
 
 # Movement speed in world coordinates
 speed = 2
@@ -67,6 +77,34 @@ clock = pygame.time.Clock()
 
 # Track the current scene (1 or 2)
 current_scene = 1
+
+def show_dialog(screen, text, width=400, height=100):
+    """Block movement, draw a simple box with the given text, wait for SPACE."""
+    font = pygame.font.SysFont(None, 24)
+    box_surf = pygame.Surface((width, height))
+    box_surf.set_alpha(200)                # semi-transparent
+    box_surf.fill((30, 30, 30))
+    text_surf = font.render(text, True, (255,255,255))
+    text_rect = text_surf.get_rect(center=(width//2, height//2))
+
+    # Position box in center of screen
+    box_pos = ((screen.get_width()-width)//2,
+               (screen.get_height()-height)//2)
+
+    waiting = True
+    while waiting:
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_SPACE:
+                waiting = False
+
+        screen.blit(box_surf, box_pos)
+        screen.blit(text_surf, (box_pos[0]+text_rect.x,
+                                box_pos[1]+text_rect.y))
+        pygame.display.flip()
+        clock.tick(30)
 
 def fade(screen, fade_in=True, duration=500):
     fade_surface = pygame.Surface(screen.get_size())
@@ -121,7 +159,7 @@ while running:
         character_rect.top = 0
     if character_rect.bottom > world_height:
         character_rect.bottom = world_height
-
+ 
     # Determine current scene's collision rectangles and world/background
     if current_scene == 1:
         collision_rects = collision_rects_scene1
@@ -141,13 +179,47 @@ while running:
             character_rect.x, character_rect.y = old_x, old_y
             break
 
-    # Scene transition: if in scene 1 and colliding with the 'entrance_saloon' zone, trigger transition
-    if current_scene == 1 and entrance_saloon_rect is not None and character_rect.colliderect(entrance_saloon_rect):
+    # Scene transition: if in scene 1 and colliding with the 'entrance_Salon' zone, trigger transition
+    if current_scene == 1 and entrance_Salon_rect is not None and character_rect.colliderect(entrance_Salon_rect):
         fade(screen, fade_in=True, duration=500)  # Fade out
         current_scene = 2
-        Spawnpoint_saloon_rect = get_object_rect("assets/maps/Saloon.tmx", "Spawnpoint")
-        character_rect.center = Spawnpoint_saloon_rect.center
+        Spawnpoint_Salon_rect = get_object_rect("assets/maps/Salon.tmx", "Spawn")
+        character_rect.center = Spawnpoint_Salon_rect.center
         fade(screen, fade_in=False, duration=500)  # Fade in
+
+    # Scene transition: if in scene 2 and colliding with the 'Exit' zone, trigger transition
+    if current_scene == 2 and Exit is not None and character_rect.colliderect(Exit):
+        fade(screen, fade_in=True, duration=500)  # Fade out
+        current_scene = 1
+        Spawnpoint_Salon_rect = get_object_rect("assets/maps/Main.tmx", "exit_saloon")
+        character_rect.center = Spawnpoint_Salon_rect.center
+        fade(screen, fade_in=False, duration=500)  # Fade in
+
+        # --- QUEST TRIGGERS ---
+    # 1) Start the quest by talking to the NPC in scene 2
+    if current_scene == 2 and not quest_started \
+       and npc_rect and character_rect.colliderect(npc_rect):
+        show_dialog(screen,
+                    "NPC: Hey! Can you get me a carrot from the farm?")
+        quest_started = True
+
+    # 2) Pick up the carrot in scene 1
+    if current_scene == 1 and quest_started \
+       and not has_carrot and carrot_rect \
+       and character_rect.colliderect(carrot_rect):
+        show_dialog(screen, "You picked up the carrot!")
+        has_carrot = True
+        # Prevent repeat pickup
+        carrot_rect = None
+
+    # 3) Return to the NPC to complete
+    if current_scene == 2 and quest_started \
+       and has_carrot and npc_rect \
+       and character_rect.colliderect(npc_rect):
+        show_dialog(screen, "NPC: Thank you! Quest complete.")
+        # Reset or advance to reward phase
+        quest_started = False
+        has_carrot   = False
 
     # --- Camera Implementation ---
     camera_x = character_rect.centerx - view_width // 2

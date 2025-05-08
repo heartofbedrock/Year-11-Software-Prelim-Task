@@ -1,10 +1,50 @@
-# Printing a text
+#Printing a text
 print("Hello World!")
 
-# Creating an array, adding a number to it and then printing the array
+#Creating an array, adding a number to it and then printing the array
 array = []
 array.append(1)
 print(array)
+
+#Conditional (if/else) statement
+number = 7
+if number % 2 == 0:
+    print(f"{number} is even")
+else:
+    print(f"{number} is odd")    # 7 is odd
+
+#Looping through a list
+fruits = ["apple", "banana", "cherry"]
+for fruit in fruits:
+    print("I like", fruit)
+
+#While loop with a counter
+count = 0
+while count < 5:
+    print("Count is", count)
+    count += 1
+
+#Defining and calling a function
+def greet(name):
+    """Return a greeting for the given name."""
+    return f"Hello, {name}!"
+
+message = greet("Alice")
+print(message)
+
+#Working with a dictionary
+person = {"name": "Bob", "age": 25}
+print(person["name"])
+person["age"] += 1
+print(person)
+
+#List comprehension
+squares = [i**2 for i in range(6)]
+print(squares)
+
+#Reading input from the user
+user_input = input("Enter something: ")
+print("You entered:", user_input)
 
 # Using the random model to play a game of rock paper scissors
 import random
